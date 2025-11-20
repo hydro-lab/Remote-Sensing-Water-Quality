@@ -1,4 +1,4 @@
 # Remote Sensing of Water Quality  
 
-Tommy's project - summer 2024  
+Correlate images from Sentinel 2 MSI with in situ turbidity measurements.
 
