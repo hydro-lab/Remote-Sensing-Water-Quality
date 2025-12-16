@@ -4,6 +4,7 @@ library(dplyr)
 library(lubridate)
 library(parallel)
 library(doParallel)
+library(ggplot2)
 
 im <- list.files("/Users/davidkahler/Downloads/Turbidity/", 
                  pattern = "*.txt$", 
@@ -57,5 +58,18 @@ z <- z %>%
      mutate(turbidity = X3/X4) %>%
      select(d, temperature, turbidity)
 
+z <- z %>% rename(date = d)
 write_csv(z, "balule_turbidity_csv", append = TRUE)
+
+z <- z %>% mutate(dt = as_datetime(d))
+
+ggplot(z) +
+     geom_point(aes(x = dt, y = turbidity)) +
+     scale_x_datetime() +
+     xlab("Date") +
+     ylab("Turbidity Signal (uncalibrated)") +
+     theme(panel.background = element_rect(fill = "white", colour = "black")) +
+     theme(aspect.ratio = 1/1.618) +
+     theme(axis.text = element_text(face = "plain", size = 12), axis.title = element_text(face = "plain", size = 14))
+
 
