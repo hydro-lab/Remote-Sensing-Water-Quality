@@ -15,14 +15,16 @@ im <- list.files("/Users/davidkahler/Downloads/Turbidity/",
 registerDoParallel(detectCores())
 x <- foreach (i = 1:length(im), .combine = 'rbind') %dopar% { # parallel computing loop: this changes how data are transferred back from each operation.
      y <- read_csv(im[i], skip = 3, col_names = FALSE)
-     z <- y %>%
-          mutate(dt = force_tz(as_datetime(X1), tz = "Africa/Johannesburg"), temp = X3, Sensor = X4) %>%
-          select(dt, temp, Sensor) %>%
-          mutate(d = as_date(dt)) %>%
-          group_by(d) %>%
-          summarize(t = mean(temp, rm.na = TRUE), s = mean(Sensor, rm.na = TRUE), c = length(Sensor)) %>%
-          mutate(dn = as.numeric(d))
-     print(z)
+     if (length(y) > 0) {
+          z <- y %>%
+               mutate(dt = force_tz(as_datetime(X1), tz = "Africa/Johannesburg"), temp = X3, Sensor = X4) %>%
+               select(dt, temp, Sensor) %>%
+               mutate(d = as_date(dt)) %>%
+               group_by(d) %>%
+               summarize(t = mean(temp, rm.na = TRUE), s = mean(Sensor, rm.na = TRUE), c = length(Sensor)) %>%
+               mutate(dn = as.numeric(d))
+          print(z)
+     }
 }
 
 n <- max(x$dn) - min(x$dn) + 1
