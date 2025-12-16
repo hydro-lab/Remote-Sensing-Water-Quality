@@ -57,6 +57,5 @@ z <- z %>%
      mutate(turbidity = X3/X4) %>%
      select(d, temperature, turbidity)
 
-
-
+write_csv(z, "balule_turbidity_csv", append = TRUE)
 
