@@ -1,7 +1,7 @@
 clear all; close all; clc
 
 % Load and combine .txt files
-folderPath = 'C:\Users\miriamfreer\Desktop\Research\Fall 2025\KrugerSensors\Olifants River\Balule\Dissovled Oxygen\7450-894360 Balule DO Jan25';
+folderPath = '/Users/rachelelavagno/Downloads/turbinity data'
 %cd(folderPath) % Move to folder
 
 fileList = dir('*.txt');
