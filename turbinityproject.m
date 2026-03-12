@@ -1,10 +1,10 @@
 %% turbinity data, dates and imagines 
 
-clear all; close all; clc
+clear; close all; clc
 
 % Load and combine .txt files
 
-folderPath = '/Users/rachelelavagno/Downloads/turbinitydata'
+folderPath = '/Users/rachelelavagno/Downloads/turbinitydata';
 
 fileList = dir('*.txt');
 allText = [];
@@ -19,184 +19,164 @@ end
 % Sort by time
 allText = sortrows(allText, "date", "ascend");
 
-
-%% data from sentinel 2 (2023)   
-%u = readtable('/Users/rachelelavagno/Documents/git/Remote-Sensing-Water-Quality/sediment_data.23.txt')
-
-%%  
-% Initialize a new column in Table u to store the results
-% We fill it with NaN (Not a Number) as a placeholder
-%u.Matchedturbidity = NaN(height(u), 1);
-
-% Loop through every row of Table A
-% for i = 1:height(u)
-% 
-%     % Get the date from Var7 for the current row
-%     currentDate = u.Var7(i);
-% 
-%     % Find the row index in u where the dates match
-%     % This returns a logical array (0s and 1s)
-%     matchIndex = allText.date == currentDate;
-% 
-%     % Check if a match was actually found
-%     if any(matchIndex)
-%         % Assign the turbidity value from Alltext to u
-%         u.Matchedturbidity(i) = allText.turbidity(matchIndex);
-%     end
-% end
-
-
-%% repeat for data turbinity z j (2024 and 2025) 
-% z = readtable('/Users/rachelelavagno/Documents/git/Remote-Sensing-Water-Quality/sediment_data.24.txt')
-% j = readtable('/Users/rachelelavagno/Documents/git/Remote-Sensing-Water-Quality/sediment_data.25.txt')
-
-%%
-% for 2024 z 
-% z.Matchedturbidity = NaN(height(z), 1);
-% 
-% for i = 1:height(z)
-% 
-%     currentDate = z.Var7(i);
-% 
-%     matchIndex = allText.date == currentDate;
-% 
-%     if any(matchIndex)
-% 
-%         z.Matchedturbidity(i) = allText.turbidity(matchIndex);
-%     end
-% end
-
-%%
-% for 2025 j
-% j.Matchedturbidity = NaN(height(j), 1);
-% 
-% for i = 1:height(j)
-% 
-%     currentDate = j.Var7(i);
-% 
-%     matchIndex = allText.date == currentDate;
-% 
-%     if any(matchIndex)
-% 
-%         j.Matchedturbidity(i) = allText.turbidity(matchIndex);
-%     end
-% end
-
-
-%% Final Table date turbinity 
-% % u
-% T1 = u(:, {'Var7', 'Matchedturbidity'});
-% T1.Properties.VariableNames = {'Date', 'Turbidity'};
-% 
-% % z 
-% T2 = z(:, {'Var7', 'Matchedturbidity'}); 
-% T2.Properties.VariableNames = {'Date', 'Turbidity'};
-% 
-% % j
-% T3 = j(:, {'Var7', 'Matchedturbidity'});
-% T3.Properties.VariableNames = {'Date', 'Turbidity'};
-% 
-% FinalTable = [T1; T2; T3]; 
-% 
-% FinalTable = sortrows(FinalTable, 'Date');
-% 
-% % find indices where Turbidity is NOT NaN
-% rowsWithData = ~isnan(FinalTable.Turbidity); 
-% % Keep only those rows
-% FinalTable = FinalTable(rowsWithData, :);
-% 
-% % Display or Save the result
-% disp(FinalTable); 
-
 %% 
-% (date format: "Balule_2025-01-01 00:00:00.tif" transform to
-% "Balule_2023-03-09.tif")
-
-%% collect in a table 
-
-% FinalTable.FileName = repmat("", height(FinalTable), 1);
-% st = string(FinalTable{:, 1});
-% 
-% % Use string arithmetic to create the whole column at once
-% FinalTable.FileName = "Balule_" + st + ".tif";
-
-%% name imagines 
-% Set your base folder path
-% folderPath = "/Users/rachelelavagno/Downloads/Turbidity_Images/";
-% 
-% % Extract the dates and convert to strings
-% st = string(FinalTable{:, 1});
-% 
-% % Construct filenames
-% % On Mac, if a file appears to have a ":" in Finder, 
-% % MATLAB/UNIX usually sees it as a "/" so replace it
-% fn = "Balule_" + st + ".tif";
-% 
-% 
-% % Create the full paths
-% FinalTable.FullFilePath = folderPath + fn;
-
-%% Create the Datastore with imagines plus turbinity at every date 
-% We use cellstr to ensure compatibility with older MATLAB versions
-% = imageDatastore(cellstr(FinalTable.FullFilePath));
 function data = myCustomRead(filename)
-    % This reads all bands of a multi-layer TIFF
-    info = imfinfo(filename);
-    numberOfBands = numel(info);
-    
-    % Initialize a 3D array (Height x Width x Bands)
-    data = zeros(info(1).Height, info(1).Width, numberOfBands, 'uint16'); 
-    
-    for k = 1:numberOfBands
-        data(:,:,k) = imread(filename, k);
-    end
-end
+    % Directly read the file
+    raw_data = imread(filename);
 
+    % Ensure it is in the format you want (uint16)
+    data = single(uint16(raw_data));
+end
+%% trial4 
+% function data = myCustomRead(filename)
+%     raw_data = single(imread(filename)) / 65535;
+% 
+%     % Assuming Channel 3 is Green and Channel 4 is Red (adjust for your sensor)
+%     % NDTI = (Red - Green) / (Red + Green)
+%     green = raw_data(:,:,3);
+%     red = raw_data(:,:,4);
+%     ndti = (red - green) ./ (red + green + 1e-6); % 1e-6 prevents divide by zero
+% 
+%     % Add NDTI as the 12th channel
+%     data = cat(3, raw_data, ndti);
+% end
+%% trial2
+% function data = myCustomRead(filename)
+%     raw_data = imread(filename);
+%     % Scaling is the most effective way to lower RMSE in satellite CNNs
+%     data = single(raw_data) / 65535; 
+% end
+%% trial3 was to add 12th layer 
+
+%%
 imds = imageDatastore("/Users/rachelelavagno/Downloads/Turbidity_Images/",'FileExtensions',{'.tif'}, ...
 'IncludeSubfolders',true, ...
 'ReadFcn',@myCustomRead); 
 
-%%
+%% testing 
+img = read(imds);
 
-dataFolder = "/Users/rachelelavagno/Downloads/Turbidity_Images/"; 
+%% matched date of imagine in datastore
+% Get all file paths from the datastore
+filePaths = imds.Files;
 
-imds = imageDatastore(dataFolder, ...
-    'FileExtensions', {'.tif'}, ...
-    'IncludeSubfolders', true, ...
-    'ReadFcn', @myCustomRead); 
-%%  
-% 1. Create a datastore for the turbidity values (labels)
-% We extract the turbidity values from your FinalTable
-labelDatastore = arrayDatastore(FinalTable.Turbidity);
+% Create a table of images with a 'Key' column (e.g., the date or ID)
 
-% 2. Combine the images and the labels
-% This is essential so they stay synchronized during training
-cds = combine(imds, labelDatastore);
+imageInfo = table(filePaths, 'VariableNames', {'FullFilePath'});
 
-%%
+% Example: Extracting a date string from the filename
+% Adjust the regex based on your actual naming convention
+imageInfo.DateKey = regexp(imageInfo.FullFilePath, '\d{4}-\d{2}-\d{2}', 'match', 'once');
 
-% Get the size of one image to set the input layer
-sampleImg = read(imds);
-[height, width, channels] = size(sampleImg);
 
+%% 
+% Convert both key columns to the standard 'string' type
+imageInfo.DateKey = string(imageInfo.DateKey);
+allText.date = string(allText.date);
+
+% Now the innerjoin will work perfectly
+matchedTurbidity = innerjoin(imageInfo, allText,'LeftKeys', 'DateKey', 'RightKeys','date');
+% 
+% % Remove any potential duplicates if the same date appeared in multiple files
+matchedTurbidity = unique(matchedTurbidity, 'rows');
+
+% Find the rows where 'turbidity' is NaN
+nanRows = isnan(matchedTurbidity.turbidity);
+ 
+% Deletes those rows from the table entirely
+matchedTurbidity(nanRows, :) = []; 
+
+%% I have a datatable with turbinity and images 
+% I start to train CNN 
+% Create the filtered image datastore
+imdsMatched = imageDatastore(matchedTurbidity.FullFilePath, ...
+    'ReadFcn', @myCustomRead);
+
+%% 
+% Ensure turbidity is a column vector of type double
+%matchedTurbidity.turbidity(matchedTurbidity.turbidity < 0) = 0;
+turbidityValues = single(matchedTurbidity.turbidity);
+
+% Create labels datastore
+labelsDS = arrayDatastore(turbidityValues);
+%% 
+cds = combine(imdsMatched, labelsDS);
+%  Combine the images and the labels
+%% Test the combined datastore
+data = read(cds);
+img = data{1};
+lbl = data{2};
+
+fprintf('Image size: %d x %d x %d\n', size(img,1), size(img,2), size(img,3));
+fprintf('Turbidity value: %.2f\n', lbl);
+
+%% define CNN architecture 
 layers = [
-    imageInputLayer([height width channels], 'Name', 'input')
-    
-    imds
+    imageInputLayer([29 35 11], 'Normalization', 'none')
+
     convolution2dLayer(3, 16, 'Padding', 'same')
     batchNormalizationLayer
     reluLayer
-    
-    maxPooling2dLayer(2, 'Stride', 2)
-    
+
+    maxPooling2dLayer(2, 'Stride', 2) 
+
     convolution2dLayer(3, 32, 'Padding', 'same')
     batchNormalizationLayer
     reluLayer
-    
+
     fullyConnectedLayer(64)
     reluLayer
-    
-    % The most important part for Regression:
-    fullyConnectedLayer(1) % One output (Turbidity value)
-    regressionLayer        % Tells MATLAB to calculate Mean Squared Error
+
+    fullyConnectedLayer(1) 
+    % Note: No regressionLayer here when using trainnet with "mse"
 ];
+
+%% Training Options (updated for trainnet)
+% We remove 'Metrics' because it's handled differently in the new version
+options = trainingOptions('adam', ...
+    'MaxEpochs', 50, ...
+    'MiniBatchSize', 16, ...
+    'InitialLearnRate', 1e-3, ...
+    'Plots', 'training-progress', ...
+    'Shuffle', 'every-epoch', ...
+    'Verbose', false);
+
+%% Start Training (Using trainnet) 
+% Note: for regression, we specify 'mse' (Mean Squared Error) as the loss
+net = trainnet(cds, layers, "mse", options);
+
+%% run to save 
+% Save the trained network to a file
+save('OlifantsTurbidityModel.mat', 'net');
+
+%%
+% Use minibatchpredict instead of predict for datastores
+predictedTurbidity = minibatchpredict(net, imdsMatched);
+
+% Ensure actual values are in the same format for plotting
+actualTurbidity = single(matchedTurbidity.turbidity);
+
+%%
+figure;
+scatter(actualTurbidity, predictedTurbidity, 'filled', 'MarkerFaceAlpha', 0.6);
+hold on;
+plot([min(actualTurbidity) max(actualTurbidity)], [min(actualTurbidity) max(actualTurbidity)], 'r--', 'LineWidth', 2);
+xlabel('Measured Turbidity (NTU)');
+ylabel('CNN Predicted Turbidity (NTU)');
+title('Olifants River Turbidity Prediction Performance');
+grid on;
+
+%% Calculate RMSE to see the average error
+rmseVal = sqrt(mean((actualTurbidity - predictedTurbidity).^2));
+fprintf('The average error (RMSE) is: %.2f NTU\n', rmseVal);
+
+%% is it a good cnn ?
+% The Verdict: It is Good (B grade).
+%  An error of ~21 NTU means the model can definitely
+%  distinguish between "Clear," "Moderate," and "Highly Turbid" water.
+% 
+% The Challenge: If you are trying to tell the difference
+%  between 5 NTU and 15 NTU (which is critical for drinking
+%  water standards), an error of 21 is too high.
+%  If you are just mapping general sediment plumes in
+%  the Olifants River, this is already very useful.
